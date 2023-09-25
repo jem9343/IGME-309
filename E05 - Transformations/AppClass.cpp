@@ -55,7 +55,7 @@ void Application::Display(void)
 	matrix4 m4Model = IDENTITY_M4;
 
 	// - - SCALE - - 
-	// Scale it by 2
+	// Scale it by 2 
 	// matrix4 m4Scale = glm::scale(vector3(5.0f, 5.0f, 5.0f));
 
 	// Scale it by 2 using GLOBAL coordinates
