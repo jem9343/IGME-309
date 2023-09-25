@@ -9,8 +9,8 @@ void Application::InitVariables(void)
 	m_pCameraMngr->SetPositionTargetAndUpward(v3Position, v3Target, v3Upward);
 
 	//Initialize the mesh
-	m_pMesh = new MyMesh();
-	m_pMesh->GenerateCube(1.0f, C_WHITE);
+	//m_pMesh = new MyMesh();
+	//m_pMesh->GenerateCube(1.0f, C_WHITE);
 	
 	for (int i = 0; i < 46; i++)
 	{
