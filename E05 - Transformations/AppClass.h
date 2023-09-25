@@ -1,5 +1,5 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@rit.edu)
+Programmer: Jay Miller (jem9343@rit.edu)
 Date: 2021/02
 Update: 2021/02
 ----------------------------------------------*/
@@ -21,9 +21,11 @@ using namespace BTX;
 class Application
 {
 	uint m_uMeshCount = 10;
-	MyMesh* m_pMesh;
+	MyMesh* m_pMesh = nullptr;
+	std::vector<MyMesh*> vectorOfMeshes;
+
 private:
-	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	String m_sProgrammer = "Jay Miller - jem9343@rit.edu";
 	static ImGuiObject gui; //GUI object
 
 	uint m_uRenderCallCount = 0; //count of render calls per frame
