@@ -10,7 +10,7 @@ void Application::InitVariables(void)
 
 	//init the mesh
 	m_pMesh = new MyMesh();
-	m_pMesh->GenerateCone(0.5f, 1.0f, 5, C_WHITE);
+	m_pMesh->GenerateCube(0.5, C_BLUE);
 }
 void Application::Update(void)
 {
@@ -38,23 +38,7 @@ void Application::Display(void)
 	ClearScreen();
 
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix(); //view Matrix
-	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix(); //Projection Matrix
-
-	//Matrix of the model, its position in the world
-	/* //Sol 1
-	float fStartPos = -5.0f;
-	float fEndPos = 5.0f;
-	static DWORD dStartTime = GetTickCount();
-	DWORD dCurrentTime = GetTickCount();
-	DWORD dTime = dCurrentTime - dStartTime;
-	float fTime = dTime / 1000.0f;
-	float fTotalAnimationTime = 10.0f;
-	//fTotal -> 1.0f
-	//fTime -> x
-	float fPercentage = fTime  / fTotalAnimationTime;
-	float fCurrentPos = glm::lerp(fStartPos, fEndPos, fPercentage);
-	matrix4 m4Model = glm::translate(IDENTITY_M4, vector3(fCurrentPos, 0.0f, 0.0f));
-	*/
+	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix(); //Projection Matri
 
 	//Sol2
 	//Get a timer
@@ -71,6 +55,17 @@ void Application::Display(void)
 		v3Stop.push_back(vector3(3, -0, 0));
 		v3Stop.push_back(vector3(0, 2.5, 0));
 		v3Stop.push_back(vector3(0, -2.5, 0));
+		v3Stop.push_back(vector3(-4.0f, -2.0f, 5.0f));
+		v3Stop.push_back(vector3(1.0f, -2.0f, 5.0f));
+		v3Stop.push_back(vector3(-3.0f, -1.0f, 3.0f));
+		v3Stop.push_back(vector3(2.0f, -1.0f, 3.0f));
+		v3Stop.push_back(vector3(-2.0f, 0.0f, 0.0f));
+		v3Stop.push_back(vector3(3.0f, 0.0f, 0.0f));
+		v3Stop.push_back(vector3(-1.0f, 1.0f, -3.0f));
+		v3Stop.push_back(vector3(4.0f, 1.0f, -3.0f));
+		v3Stop.push_back(vector3(0.0f, 2.0f, -5.0f));
+		v3Stop.push_back(vector3(5.0f, 2.0f, -5.0f));
+		v3Stop.push_back(vector3(1.0f, 3.0f, -5.0f));
 		bInit = true;
 	}
 
