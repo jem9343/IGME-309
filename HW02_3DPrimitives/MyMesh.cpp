@@ -44,6 +44,50 @@ void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
 }
+
+void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Color)
+{
+	Release();
+	Init();
+
+	if (a_fRadius < 0.01f)
+		a_fRadius = 0.01f;
+
+	if (a_nSubdivisions < 3)
+		a_nSubdivisions = 3;
+	if (a_nSubdivisions > 360)
+		a_nSubdivisions = 360;
+
+	/*
+		Calculate a_nSubdivisions number of points around a center point in a radial manner
+		then call the AddTri function to generate a_nSubdivision number of faces
+
+	*/
+
+	std::vector<vector3 > vertex;
+	GLfloat theta = 0;
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius,0.0f) ;
+		theta += delta;
+		vertex.push_back(temp);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(ZERO_V3, vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+	}
+
+
+	//AddTri(vector3(0.0f, 0.0f, 0.0f),
+	//	vector3(1.0f, 0.0f, 0.0f),
+	//	vector3(0.77f, 0.77f, 0.0f));
+
+	// Adding information about color
+	//CompleteMesh(a_v3Color);
+	//CompileOpenGL3X();
+}
 void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions, vector3 a_v3Color)
 {
 	if (a_fRadius < 0.01f)
@@ -60,8 +104,39 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	// Using code from generate circle
+	std::vector<vector3 > vertex;
+	GLfloat theta = 0;
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
+		theta += delta;
+		vertex.push_back(temp);
+	}
+
+	// In order to have the cone be the proper height, change the y value to the height (divided by 2)
+	for (int i = 0; i < a_nSubdivisions; i++)
+
+	{
+		AddTri(vector3(0, a_fHeight/2 , 0), vertex[i], vertex[(i + 1) % a_nSubdivisions]);
+		//AddTri(vector3(a_fRadius - halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius + halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius / 2, a_fHeight, i));
+		
+	}
+	
+	std::vector<vector3> vertexOfCircle;
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
+		theta += delta;
+		vertexOfCircle.push_back(temp);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(ZERO_V3, vertexOfCircle[(i + 1) % a_nSubdivisions], vertexOfCircle[i]);
+	}
+
 	// -------------------------------
 
 	// Adding information about color
@@ -84,9 +159,150 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	// First Circle
+	GLfloat theta = 0;
+	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+	std::vector<vector3> vertexOfCircle;
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
+		theta += delta;
+		vertexOfCircle.push_back(temp);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(ZERO_V3, vertexOfCircle[i], vertexOfCircle[(i + 1) % a_nSubdivisions]);
+	}
+
+	//Bottom circle
+
+	std::vector<vector3> vertexOfBottomCircle;
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 temp = vector3(cos(theta) * a_fRadius, a_fHeight, sin(theta) * a_fRadius);
+		theta += delta;
+		vertexOfBottomCircle.push_back(temp);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 bValue = vertexOfBottomCircle[(i + 1) % a_nSubdivisions];
+		vector3 cValue = vertexOfBottomCircle[i];
+
+		// Change the y values
+
+		bValue.y = a_fHeight;
+		cValue.y = a_fHeight;
+
+		AddTri(vector3(0, a_fHeight, 0), bValue, cValue);
+
+		float fractionValue = a_fRadius / a_nSubdivisions;
+
+		//AddQuad( vector3(vertexOfBottomCircle[i].x, a_fHeight, vertexOfBottomCircle[i].z), 
+		//	vector3(vertexOfBottomCircle[i].x + delta, a_fHeight, vertexOfBottomCircle[i].z + delta), 
+		//	vector3(vertexOfBottomCircle[i].x, 0, vertexOfCircle[i].z),
+		//	vector3(vertexOfBottomCircle[i].x + delta, 0, vertexOfBottomCircle[i].z));
+
+
+		///if (i == 0)
+		//{
+			//AddQuad(
+			//	vector3(vertexOfBottomCircle[i].x - (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z + (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i].x - (fractionValue / 2), 0, vertexOfCircle[i].z+ (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)));
+
+			//AddQuad(
+			//	vector3(vertexOfBottomCircle[i].x, a_fHeight, vertexOfBottomCircle[i].z),
+			//	vector3(vertexOfBottomCircle[i].x - (fractionValue/2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue/2)),
+			//	vector3(vertexOfBottomCircle[i].x, 0, vertexOfBottomCircle[i].z),
+			//	vector3(vertexOfBottomCircle[i].x - (fractionValue/2), 0, vertexOfCircle[i].z - (fractionValue/2)));
+
+			//AddQuad(
+			//	vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i+1].z - (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), 0, vertexOfCircle[i+1].z - (fractionValue / 2)),
+			//	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)));
+		//}
+		if (i == a_nSubdivisions - 1)
+		{
+			AddQuad(vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[0].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), 0, vertexOfBottomCircle[0].z - (fractionValue / 2)));
+		}
+		else {
+			//AddQuad(
+			//vector3(vertexOfBottomCircle[i-1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i-1].z - (fractionValue / 2)),
+			//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+			//vector3(vertexOfBottomCircle[i-1].x + (fractionValue / 2), 0, vertexOfCircle[i-1].z - (fractionValue / 2)),
+		    //	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)));
+
+			//AddQuad(
+				//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i - 1].x - (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i - 1].z + (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i - 1].x - (fractionValue / 2), 0, vertexOfCircle[i - 1].z + (fractionValue / 2)));
+
+			AddQuad(
+				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
+				vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), 0, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)));
+		}
+
+
+	}
+
 	// -------------------------------
+
+	float x = 0;
+	float y = 0;
+	float z = 0;
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		x = (a_fRadius * cos(theta));
+		y = a_fHeight;
+		z = (sin(theta) * a_fRadius);
+		theta += delta;
+
+	}
+
+
+	//std::vector<float> sineList;
+
+	//std::vector<float> cosineList;
+
+	//for (int i = 0; i <= a_nSubdivisions; i++)
+	//{
+	//	sineList.push_back(sin(currentAngle));
+	//	cosineList.push_back(cos(currentAngle));
+
+		// Update slice angle
+	//	currentAngle += angle;
+	//}
+
+	// Pre-calculate X and Z coordinates
+	//std::vector<float> xCoordinates;
+	//std::vector<float> zCoordinates;
+	//for (int i = 0; i <= a_nSubdivisions; i++)
+	//{
+	//	xCoordinates.push_back(cosineList[i] * a_fRadius);
+	//	std::cout << xCoordinates[i];
+	//	zCoordinates.push_back(sineList[i] * a_fRadius);
+	//}
+
+	// Add cylinder side vertices
+	//for (int i = 0; i <= a_nSubdivisions; i++)
+	{
+	//	vector3 topPosition = vector3(xCoordinates[i], a_fHeight / 2.0f, zCoordinates[i]);
+	//	vector3 bottomPosition = vector3(xCoordinates[i], -a_fHeight / 2.0f, zCoordinates[i]);
+	//	AddTri(vector3(xCoordinates[i], -a_fHeight / 2.0f, zCoordinates[i]), bottomPosition, topPosition);
+		//AddQuad(topPosition[i], topPosition[i + 1], bottomPosition[i], bottomPosition[i + 1]);
+	}
+
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -147,7 +363,26 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	float x = 0;
+	float y = 0;
+	float z = 0;
+	
+
+	float radiansInner = (2.0 * PI / a_nSubdivisionsA);
+	float radiansOuter= (2.0 * PI / a_nSubdivisionsB);
+
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+
+		x = (a_fInnerRadius + a_fOuterRadius * cos(radiansInner)) * cos(radiansOuter);
+		y = (a_fInnerRadius + a_fOuterRadius * cos(radiansOuter)) * sin(radiansInner);
+		z = (a_fOuterRadius * sin(radiansOuter));
+
+		AddTri(vector3(x, y, z), vector3(1, 1, 1), vector3(0, 0, 0));
+	}
+
+
+
 	// -------------------------------
 
 	// Adding information about color
@@ -172,7 +407,8 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	// clear memory of prev arrays
+	
 	// -------------------------------
 
 	// Adding information about color
