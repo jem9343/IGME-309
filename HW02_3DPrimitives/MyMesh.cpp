@@ -44,50 +44,6 @@ void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
 }
-
-void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Color)
-{
-	Release();
-	Init();
-
-	if (a_fRadius < 0.01f)
-		a_fRadius = 0.01f;
-
-	if (a_nSubdivisions < 3)
-		a_nSubdivisions = 3;
-	if (a_nSubdivisions > 360)
-		a_nSubdivisions = 360;
-
-	/*
-		Calculate a_nSubdivisions number of points around a center point in a radial manner
-		then call the AddTri function to generate a_nSubdivision number of faces
-
-	*/
-
-	std::vector<vector3 > vertex;
-	GLfloat theta = 0;
-	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		vector3 temp = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius,0.0f) ;
-		theta += delta;
-		vertex.push_back(temp);
-	}
-
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		AddTri(ZERO_V3, vertex[i], vertex[(i + 1) % a_nSubdivisions]);
-	}
-
-
-	//AddTri(vector3(0.0f, 0.0f, 0.0f),
-	//	vector3(1.0f, 0.0f, 0.0f),
-	//	vector3(0.77f, 0.77f, 0.0f));
-
-	// Adding information about color
-	//CompleteMesh(a_v3Color);
-	//CompileOpenGL3X();
-}
 void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions, vector3 a_v3Color)
 {
 	if (a_fRadius < 0.01f)
@@ -104,40 +60,42 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Using code from generate circle
+	// This code was based off of the circle exercise,
+	// before I moved on to a different method for the rest of the shapes.
+
+	#pragma region "Build Cone"
+	// - CIRCLE EXERCISE - GENERATE VERTICES - 
+	
+	// List of vertices
 	std::vector<vector3 > vertex;
-	GLfloat theta = 0;
-	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
+	// Current fraction value
+	float theta = 0;
+	// Fraction value to increment by
+	float fractionValue = (2.0 * PI) / a_nSubdivisions;
+
+	// Loop used to set up vertices
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
+		// Create the vector based off the circle
 		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
-		theta += delta;
+		// and change the theta value by the incremental value
+		theta += fractionValue;
 		vertex.push_back(temp);
 	}
 
-	// In order to have the cone be the proper height, change the y value to the height (divided by 2)
+	// Loop used to draw cone
 	for (int i = 0; i < a_nSubdivisions; i++)
-
 	{
+		// Add the trianges that form the point of the cone
+		// In order to have the cone be the proper height, change the y value to the height (divided by 2)
 		AddTri(vector3(0, a_fHeight/2 , 0), vertex[i], vertex[(i + 1) % a_nSubdivisions]);
-		//AddTri(vector3(a_fRadius - halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius + halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius / 2, a_fHeight, i));
-		
-	}
-	
-	std::vector<vector3> vertexOfCircle;
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
-		theta += delta;
-		vertexOfCircle.push_back(temp);
-	}
 
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		AddTri(ZERO_V3, vertexOfCircle[(i + 1) % a_nSubdivisions], vertexOfCircle[i]);
-	}
+		// Add the circle on the bottom of the cone
+		AddTri(ZERO_V3, vertex[(i + 1) % a_nSubdivisions], vertex[i]);
 
-	// -------------------------------
+		//AddTri(vector3(a_fRadius - halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius + halfOfRadius, a_fHeight / 2, i), vector3(a_fRadius / 2, a_fHeight, i));	
+	}
+	#pragma endregion;
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -158,46 +116,120 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 
 	Release();
 	Init();
+	
+	#pragma region "Build Cylinder"
 
-	// First Circle
-	GLfloat theta = 0;
-	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
-	std::vector<vector3> vertexOfCircle;
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		vector3 temp = vector3(cos(theta) * a_fRadius, 0.0f, sin(theta) * a_fRadius);
-		theta += delta;
-		vertexOfCircle.push_back(temp);
+	// Taking one full rotation in radians (2 * pi)
+	// and dividing it by the number of subdivisions,
+	// will be used to increment sections.
+	float fractionValue = (2.0 * PI) / a_nSubdivisions;
+
+	// - - CIRCLE - TOP OF CYLINDER - -
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		// Add the triangles based on calculated values.
+		// Flip the y and z values so it faces outward.
+		AddTri(
+			vector3(0.0f, a_fHeight / 2.0f, 0.0f),
+			vector3(a_fRadius * cos(angle1), a_fHeight / 2.0f, a_fRadius * sin(angle1)),
+			vector3(a_fRadius * cos(angle0), a_fHeight / 2.0f, a_fRadius * sin(angle0)));
+	}
+	
+	// - - CIRCLE - BOTTOM OF CYLINDER - -
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		// To move the circle down to the bottom of the cylinder,
+		// Y values are the negative version of the top cylinder's y values.
+
+		// Add the triangles based on the calculated values.
+		AddTri(
+			vector3(0.0f, -a_fHeight / 2.0f, 0.0f), 
+			vector3(a_fRadius * cos(angle0), -a_fHeight / 2.0f, a_fRadius * sin(angle0)),
+			vector3(a_fRadius * cos(angle1), -a_fHeight / 2.0f, a_fRadius * sin(angle1)));
 	}
 
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		AddTri(ZERO_V3, vertexOfCircle[i], vertexOfCircle[(i + 1) % a_nSubdivisions]);
+	// - - RECTANGLES - SIDE OF CYLINDER - -
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		// Identifying points to connect through AddQuad
+		// Since there's a lot of points, I made them variables
+		// and then added them to the AddQuad Function.
+		float x0 = a_fRadius * cos(angle0);
+		float y0 = -a_fHeight / 2.0f;
+		float z0 = a_fRadius * sin(angle0);
+
+		float x1 = a_fRadius * cos(angle1);
+		float y1 = -a_fHeight / 2.0f;
+		float z1 = a_fRadius * sin(angle1);
+
+		float x2 = a_fRadius * cos(angle0);
+		float y2 = a_fHeight / 2.0f;
+		float z2 = a_fRadius * sin(angle0);
+
+		float x3 = a_fRadius * cos(angle1);
+		float y3 = a_fHeight / 2.0f;
+		float z3 = a_fRadius * sin(angle1);
+
+		// Add the Quad based on the calculated values.
+		// Flipped A & B as well as C & D because of how I calculated the values.
+		AddQuad(vector3(x1, y1, z1), vector3(x0, y0, z0), vector3(x3, y3, z3), vector3(x2, y2, z2));
 	}
 
-	//Bottom circle
+	#pragma endregion;
 
-	std::vector<vector3> vertexOfBottomCircle;
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		vector3 temp = vector3(cos(theta) * a_fRadius, a_fHeight, sin(theta) * a_fRadius);
-		theta += delta;
-		vertexOfBottomCircle.push_back(temp);
-	}
+	//This code was my brainstorming for figuring out the best way to reference
+	// the previous/next values of the vertices. I tried storing those values in different ways,
+	// before arriving at the true solution.
+	#pragma region "Commented-out code"
+	//
+	// 
+	//std::vector<vector3> vertexOfBottomCircle;
+	//for (int i = 0; i < a_nSubdivisions; i++)
+	//{
+	//	vector3 temp = vector3(cos(theta) * a_fRadius, a_fHeight, sin(theta) * a_fRadius);
+	//	theta += delta;
+	//	vertexOfBottomCircle.push_back(temp);
+	//}
 
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		vector3 bValue = vertexOfBottomCircle[(i + 1) % a_nSubdivisions];
-		vector3 cValue = vertexOfBottomCircle[i];
+	//for (int i = 0; i < a_nSubdivisions; i++)
+	//{
+	//	vector3 bValue = vertexOfBottomCircle[(i + 1) % a_nSubdivisions];
+	//	vector3 cValue = vertexOfBottomCircle[i];
 
 		// Change the y values
 
-		bValue.y = a_fHeight;
-		cValue.y = a_fHeight;
+	//	bValue.y = a_fHeight;
+	//	cValue.y = a_fHeight;
 
-		AddTri(vector3(0, a_fHeight, 0), bValue, cValue);
+	//	AddTri(vector3(0, a_fHeight, 0), bValue, cValue);
 
-		float fractionValue = a_fRadius / a_nSubdivisions;
+	//	int index = 0;
+
+	//float x = 0;
+	//float y = 0;
+	//float z = 0;
+
+	//for (int i = 0; i < a_nSubdivisions; i++)
+	//{
+	//	x = (a_fRadius * cos(theta));
+	//	y = a_fHeight;
+	//	z = (sin(theta) * a_fRadius);
+	//	theta += delta;
+
+	//}
+
 
 		//AddQuad( vector3(vertexOfBottomCircle[i].x, a_fHeight, vertexOfBottomCircle[i].z), 
 		//	vector3(vertexOfBottomCircle[i].x + delta, a_fHeight, vertexOfBottomCircle[i].z + delta), 
@@ -225,14 +257,14 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 			//	vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), 0, vertexOfCircle[i+1].z - (fractionValue / 2)),
 			//	vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)));
 		//}
-		if (i == a_nSubdivisions - 1)
-		{
-			AddQuad(vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[0].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), 0, vertexOfBottomCircle[0].z - (fractionValue / 2)));
-		}
-		else {
+		//if (i == a_nSubdivisions - 1)
+		//{
+		//	AddQuad(vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+		//		vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[0].z - (fractionValue / 2)),
+		//		vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
+		//		vector3(vertexOfBottomCircle[0].x + (fractionValue / 2), 0, vertexOfBottomCircle[0].z - (fractionValue / 2)));
+		//}
+		//else {
 			//AddQuad(
 			//vector3(vertexOfBottomCircle[i-1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i-1].z - (fractionValue / 2)),
 			//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
@@ -245,30 +277,15 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 				//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfBottomCircle[i].z - (fractionValue / 2)),
 				//vector3(vertexOfBottomCircle[i - 1].x - (fractionValue / 2), 0, vertexOfCircle[i - 1].z + (fractionValue / 2)));
 
-			AddQuad(
-				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
-				vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), 0, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)));
-		}
+			//AddQuad(
+				//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i].z - (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), a_fHeight, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i].x + (fractionValue / 2), 0, vertexOfCircle[i].z - (fractionValue / 2)),
+				//vector3(vertexOfBottomCircle[i + 1].x + (fractionValue / 2), 0, vertexOfBottomCircle[i + 1].z - (fractionValue / 2)));
+		//}
 
-
-	}
 
 	// -------------------------------
-
-	float x = 0;
-	float y = 0;
-	float z = 0;
-
-	for (int i = 0; i < a_nSubdivisions; i++)
-	{
-		x = (a_fRadius * cos(theta));
-		y = a_fHeight;
-		z = (sin(theta) * a_fRadius);
-		theta += delta;
-
-	}
 
 
 	//std::vector<float> sineList;
@@ -280,11 +297,8 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	//	sineList.push_back(sin(currentAngle));
 	//	cosineList.push_back(cos(currentAngle));
 
-		// Update slice angle
+	// Update angle
 	//	currentAngle += angle;
-	//}
-
-	// Pre-calculate X and Z coordinates
 	//std::vector<float> xCoordinates;
 	//std::vector<float> zCoordinates;
 	//for (int i = 0; i <= a_nSubdivisions; i++)
@@ -296,13 +310,14 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 
 	// Add cylinder side vertices
 	//for (int i = 0; i <= a_nSubdivisions; i++)
-	{
+	//{
 	//	vector3 topPosition = vector3(xCoordinates[i], a_fHeight / 2.0f, zCoordinates[i]);
 	//	vector3 bottomPosition = vector3(xCoordinates[i], -a_fHeight / 2.0f, zCoordinates[i]);
 	//	AddTri(vector3(xCoordinates[i], -a_fHeight / 2.0f, zCoordinates[i]), bottomPosition, topPosition);
 		//AddQuad(topPosition[i], topPosition[i + 1], bottomPosition[i], bottomPosition[i + 1]);
-	}
+	//}
 
+#pragma endregion
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -330,9 +345,122 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	#pragma region "Build Tube"
+
+	// Taking one full rotation in radians (2 * pi)
+	// and dividing it by the number of subdivisions,
+	// will be used to increment sections.
+	float fractionValue = 2 * PI / a_nSubdivisions;
+
+	// - TUBE - OUTSIDE
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		// Storing calcuations in variables for debugging
+		float x0 = a_fOuterRadius * cos(angle0);
+		float y0 = -a_fHeight / 2.0f;
+		float z0 = a_fOuterRadius * sin(angle0);
+
+		float x1 = a_fOuterRadius * cos(angle1);
+		float y1 = -a_fHeight / 2.0f;
+		float z1 = a_fOuterRadius * sin(angle1);
+
+		float x2 = a_fOuterRadius * cos(angle0);
+		float y2 = a_fHeight / 2.0f;
+		float z2 = a_fOuterRadius * sin(angle0);
+
+		float x3 = a_fOuterRadius * cos(angle1);
+		float y3 = a_fHeight / 2.0f;
+		float z3 = a_fOuterRadius * sin(angle1);
+
+		// Add the Quad based on the calculated values.
+		AddQuad(vector3(x1, y1, z1), vector3(x0, y0, z0), vector3(x3, y3, z3), vector3(x2, y2, z2) );
+	}
+
+	// - TUBE - INSIDE
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		// Storing calcuations in variables for debugging
+		float x0 = a_fInnerRadius * cos(angle0);
+		float y0 = -a_fHeight / 2.0f;
+		float z0 = a_fInnerRadius * sin(angle0);
+
+		float x1 = a_fInnerRadius * cos(angle1);
+		float y1 = -a_fHeight / 2.0f;
+		float z1 = a_fInnerRadius * sin(angle1);
+
+		float x2 = a_fInnerRadius * cos(angle0);
+		float y2 = a_fHeight / 2.0f;
+		float z2 = a_fInnerRadius * sin(angle0);
+
+		float x3 = a_fInnerRadius * cos(angle1);
+		float y3 = a_fHeight / 2.0f;
+		float z3 = a_fInnerRadius * sin(angle1);
+
+		// Add the Quad based on the calculated values.
+		AddQuad(vector3(x0, y0, z0), vector3(x1, y1, z1), vector3(x2, y2, z2), vector3(x3, y3, z3));
+	}
+
+	// - TUBE - TOP CAP
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		float x0 = a_fOuterRadius * cos(angle0);
+		float y0 = a_fHeight / 2.0f;
+		float z0 = a_fOuterRadius * sin(angle0);
+
+		float x1 = a_fOuterRadius * cos(angle1);
+		float y1 = a_fHeight / 2.0f;
+		float z1 = a_fOuterRadius * sin(angle1);
+
+		float x2 = a_fInnerRadius * cos(angle0);
+		float y2 = a_fHeight / 2.0f;
+		float z2 = a_fOuterRadius * sin(angle0);
+
+		float x3 = a_fInnerRadius * cos(angle1);
+		float y3 = a_fHeight / 2.0f;
+		float z3 = a_fOuterRadius * sin(angle1);
+		// Add the Quad based on the calculated values.
+		AddQuad(vector3(x0, y0, z0), vector3(x1, y1, z1), vector3(x3, y3, z3), vector3(x2, y2, z2));
+	}
+
+	// - TUBE - BOTTOM CAP
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// Referencing the current angle (left side) and the next angle (right side)
+		float angle0 = i * fractionValue;
+		float angle1 = (i + 1) * fractionValue;
+
+		float x0 = a_fOuterRadius * cos(angle0);
+		float y0 = -a_fHeight / 2.0f;
+		float z0 = a_fOuterRadius * sin(angle0);
+
+		float x1 = a_fOuterRadius * cos(angle1);
+		float y1 = -a_fHeight / 2.0f;
+		float z1 = a_fOuterRadius * sin(angle1);
+
+		float x2 = a_fInnerRadius * cos(angle0);
+		float y2 = -a_fHeight / 2.0f;
+		float z2 = a_fOuterRadius * sin(angle0);
+
+		float x3 = a_fInnerRadius * cos(angle1);
+		float y3 = -a_fHeight / 2.0f;
+		float z3 = a_fOuterRadius * sin(angle1);
+		// Add the Quad based on the calculated values.
+		AddQuad(vector3(x0, y0, z0), vector3(x1, y1, z1), vector3(x2, y2, z2), vector3(x3, y3, z3));
+	}
+
+#pragma endregion
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -362,28 +490,53 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Release();
 	Init();
 
-	// Replace this with your code
-	float x = 0;
-	float y = 0;
-	float z = 0;
+	#pragma region "Build Torus"
 	
+	// Fraction value to increment by, for inner and outer of the torus.
+	float innerFractionValue = (2.0 * PI) / a_nSubdivisionsA;
+	float outerFractionValue = (2.0 * PI) / a_nSubdivisionsB;
 
-	float radiansInner = (2.0 * PI / a_nSubdivisionsA);
-	float radiansOuter= (2.0 * PI / a_nSubdivisionsB);
+	for (int i = 0; i < a_nSubdivisionsA;  i++) {
+		for (int j = 0; j < a_nSubdivisionsB; j++) {
 
-	for (int i = 0; i < a_nSubdivisionsA; i++)
-	{
+			// We need two angles to build the sphere,
+			// Represented by phi and theta.
 
-		x = (a_fInnerRadius + a_fOuterRadius * cos(radiansInner)) * cos(radiansOuter);
-		y = (a_fInnerRadius + a_fOuterRadius * cos(radiansOuter)) * sin(radiansInner);
-		z = (a_fOuterRadius * sin(radiansOuter));
+			// Save the value of the current phi and theta,
+			// as well as the next values for correct quad placement.
+			float phi0 = i * innerFractionValue;
+			float phi1 = (i + 1) * innerFractionValue;
+			float theta0 = j * outerFractionValue;
+			float theta1 = (j + 1) * outerFractionValue;
 
-		AddTri(vector3(x, y, z), vector3(1, 1, 1), vector3(0, 0, 0));
-	}
 
+			// Identifying points to connect through AddQuad
+			// Since there's a lot of points, I made them variables
+			// and then added them to the AddQuad Function.
+				float x0 = (a_fOuterRadius + a_fInnerRadius * cos(theta0)) * cos(phi0);
+				float y0 = (a_fOuterRadius + a_fInnerRadius * cos(theta0)) * sin(phi0);
+				float z0 = a_fInnerRadius * sin(theta0);
 
+				float x1 = (a_fOuterRadius + a_fInnerRadius * cos(theta1)) * cos(phi0);
+				float y1 = (a_fOuterRadius + a_fInnerRadius * cos(theta1)) * sin(phi0);
+				float z1 = a_fInnerRadius * sin(theta1);
 
-	// -------------------------------
+				float x2 = (a_fOuterRadius + a_fInnerRadius * cos(theta0)) * cos(phi1);
+				float y2 = (a_fOuterRadius + a_fInnerRadius * cos(theta0)) * sin(phi1);
+				float z2 = a_fInnerRadius * sin(theta0);
+
+				float x3 = (a_fOuterRadius + a_fInnerRadius * cos(theta1)) * cos(phi1);
+				float y3 = (a_fOuterRadius + a_fInnerRadius * cos(theta1)) * sin(phi1);
+				float z3 = a_fInnerRadius * sin(theta1);
+
+				// Add the Quad via generation of vectors based on x,y,z values found
+				// Flipped A&B as well as C&D because of the order of calculations performed 
+				// in order for the quads to face the right direction.
+				AddQuad(vector3(x1, y1, z1), vector3(x0, y0, z0), vector3(x3,y3,z3), vector3(x2, y2, z2));
+			}
+		}
+
+	#pragma endregion;
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -406,11 +559,49 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Release();
 	Init();
 
-	// Replace this with your code
-	// clear memory of prev arrays
-	
-	// -------------------------------
+	#pragma region "Build Sphere"
+	// We need two angles to build the sphere,
+	// represented by phi and theta.
+	float phiAngle = 2 * PI / a_nSubdivisions;
+	float thetaAngle = PI / a_nSubdivisions;
 
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		for (int j = 0; j < a_nSubdivisions; j++)
+		{
+			// We need two angles to build the sphere,
+			// Represented by phi and theta.
+
+			// Save the value of the current phi and theta,
+			// as well as the next values for correct quad placement.
+			float phi0 = i * phiAngle;
+			float phi1 = (i + 1) * phiAngle;
+
+			float theta0 = j * thetaAngle;
+			float theta1 = (j + 1) * thetaAngle;
+
+			// Added the values of the quad directly based on calcuations
+			AddQuad(
+				vector3(
+					a_fRadius * sin(theta0) * cos(phi0),
+					a_fRadius * sin(theta0) * sin(phi0),
+					a_fRadius * cos(theta0)),
+				vector3(
+					a_fRadius * sin(theta0) * cos(phi1),
+					a_fRadius * sin(theta0) * sin(phi1),
+					a_fRadius * cos(theta0)),
+				vector3(
+					a_fRadius * sin(theta1) * cos(phi0),
+					a_fRadius * sin(theta1) * sin(phi0),
+					a_fRadius * cos(theta1)),
+				vector3(
+					a_fRadius * sin(theta1) * cos(phi1),
+					a_fRadius * sin(theta1) * sin(phi1),
+					a_fRadius * cos(theta1)));
+		}
+	}
+
+	#pragma endregion
 	// Adding information about color
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
