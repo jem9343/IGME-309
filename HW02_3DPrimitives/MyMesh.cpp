@@ -1,4 +1,4 @@
-#include "MyMesh.h"
+#include "MyMesh.h" 
 void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 {
 	if (a_fSize < 0.01f)
